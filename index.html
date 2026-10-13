@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>CardioScope 3D – Cardiac Risk Visualizer</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600&family=Instrument+Sans:wght@400;600&display=swap">
+<style>
+:root{--bg:#eef1f5;--pn:#fff;--tx:#122033;--mu:#586a7d;--ln:#d7dee7;--hi:#f1f4f8;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media(prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#08111b;--pn:#0f1b29;--tx:#e8eef5;--mu:#8a9db1;--ln:#20324a;--hi:#16263a}}
+:root[data-theme="dark"]{--bg:#08111b;--pn:#0f1b29;--tx:#e8eef5;--mu:#8a9db1;--ln:#20324a;--hi:#16263a}
+*,*:before,*:after{box-sizing:inherit}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--tx);font:14px/1.45 "Instrument Sans",system-ui,sans-serif}
+header{display:flex;align-items:center;gap:16px;padding:14px 20px;flex-wrap:wrap}
+h1{font:600 26px "Fraunces",Georgia,serif;margin:0}
+header p{margin:0;color:var(--mu);flex:1;min-width:220px}
+button,select{font:inherit;color:var(--tx);background:var(--hi);border:1px solid var(--ln);border-radius:8px;padding:6px 11px;cursor:pointer}
+button:hover{border-color:var(--mu)}button:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid #3b8cff;outline-offset:2px}
+main{display:grid;grid-template-columns:270px minmax(0,1fr) 330px;gap:14px;padding:0 20px 20px;align-items:start}
+.card{background:var(--pn);border:1px solid var(--ln);border-radius:12px;padding:14px}
+h2{font:600 15px "Fraunces",Georgia,serif;margin:0 0 10px}
+h3{font-size:13px;margin:16px 0 6px}
+#fields label{display:flex;flex-wrap:wrap;justify-content:space-between;margin-bottom:9px;color:var(--mu)}
+#fields input[type=range]{width:100%;accent-color:#e0364b}
+#fields label span{color:var(--tx);font-variant-numeric:tabular-nums}
+#fields label select{margin-left:auto}
+label.ck{justify-content:flex-start!important;gap:8px;color:var(--tx)!important}
+.pre{display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap}
+#cv{height:min(62vh,560px);min-height:340px;border-radius:8px;position:relative;overflow:hidden;background:radial-gradient(circle at 50% 40%,var(--hi),var(--pn) 70%);touch-action:none;cursor:grab}
+#cv canvas{display:block;width:100%;height:100%}
+#tip{position:absolute;pointer-events:none;background:var(--pn);border:1px solid var(--ln);border-radius:6px;padding:4px 8px;font-size:12px;display:none;white-space:nowrap}
+.bar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:10px;color:var(--mu)}
+.bar label{display:flex;gap:5px;align-items:center}
+.leg{height:8px;border-radius:4px;background:linear-gradient(90deg,hsl(130,85%,50%),hsl(65,85%,50%),hsl(0,85%,50%));margin-top:10px}
+.lg2{display:flex;justify-content:space-between;color:var(--mu);font-size:12px}
+.big{font:600 44px/1 "Fraunces",Georgia,serif;font-variant-numeric:tabular-nums}
+.kp{display:flex;gap:14px;align-items:flex-end;flex-wrap:wrap}
+.kp small{display:block;color:var(--mu);margin-bottom:3px}
+.tag{display:inline-block;padding:2px 9px;border-radius:99px;color:#101820;font-weight:600;font-size:12px}
+table{width:100%;border-collapse:collapse}td{padding:3px 0;border-bottom:1px solid var(--ln)}td:last-child{text-align:right;font-variant-numeric:tabular-nums}
+.dot{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:7px}
+.drv{display:grid;grid-template-columns:120px 1fr;gap:8px;align-items:center;margin:3px 0;font-size:12.5px}
+.drv i{display:block;height:7px;border-radius:4px}
+#ecg{width:100%;height:80px;display:block}
+#seg{background:var(--hi);border-radius:8px;padding:8px 10px;margin-top:8px;min-height:44px}
+.note{color:var(--mu);font-size:12px}
+details{margin:0 20px 24px;color:var(--mu);font-size:12.5px}summary{cursor:pointer;color:var(--tx)}
+@media(max-width:1060px){main{grid-template-columns:1fr}#fields{columns:2 220px}}
+@media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important}}
+</style></head><body>
+<header><h1>CardioScope 3D</h1><p>Enter clinical, lab, ECG and imaging data. The model estimates coronary artery disease risk and paints it onto each coronary segment of a 3D heart.</p><button id="th" title="Switch light/dark theme">Theme</button></header>
+<main>
+<aside class="card"><h2>Patient data</h2>
+<div class="pre"><button data-p="low">Low-risk example</button><button data-p="mod">Moderate</button><button data-p="high">High-risk example</button></div>
+<div id="fields"></div></aside>
+<section class="card"><h2>Coronary risk map</h2>
+<div id="cv"><div id="tip"></div></div>
+<div class="bar"><button data-v="0">Front</button><button data-v="3.14">Back</button><button data-v="1.57">Left side</button>
+<label><input type="checkbox" id="rot" checked> Auto-rotate</label><label>Heart opacity <input type="range" id="op" min="0.1" max="1" step="0.05" value="0.55"></label></div>
+<div class="leg"></div><div class="lg2"><span>Low risk</span><span>Intermediate</span><span>High risk</span></div>
+<div id="seg" class="note">Hover or tap a vessel segment to see its estimated narrowing. Drag to rotate, scroll to zoom.</div></section>
+<aside class="card"><h2>Risk summary</h2><div id="res"></div>
+<h3>ECG (synthesised from inputs)</h3><canvas id="ecg" width="300" height="80"></canvas>
+<h3>What if? Simulate changes</h3>
+<label class="ck" style="display:flex;gap:8px"><input type="checkbox" id="s1"> Quit smoking</label>
+<label class="ck" style="display:flex;gap:8px"><input type="checkbox" id="s2"> LDL down to 70 mg/dL</label>
+<label class="ck" style="display:flex;gap:8px"><input type="checkbox" id="s3"> Systolic BP down to 120</label>
+<label class="ck" style="display:flex;gap:8px"><input type="checkbox" id="s4"> BMI down to 24</label>
+<div id="proj" class="note"></div></aside>
+</main>
+<details><summary>How it works and limitations</summary>
+<p><b>Multimodal inputs:</b> demographics and vitals, lipid panel and inflammation marker, exercise ECG findings (ST depression, peak heart rate), symptoms, and coronary calcium score from CT imaging.</p>
+<p><b>Model:</b> a transparent additive logistic model. Coefficients are set from the direction and rough size of well-known risk-factor effects (age, sex, blood pressure, LDL, HDL, smoking, diabetes, calcium score, symptoms and stress-test findings). A second logistic equation gives the 10-year chance of a major cardiac event. Every term is shown as a driver so the result can be explained.</p>
+<p><b>3D mapping:</b> overall risk is shifted per artery (left anterior descending highest, left main lowest) and per segment (proximal highest, distal lowest). Segment colour, vessel narrowing and plaque deposits all follow that score.</p>
+<p><b>Limitations:</b> this is a research prototype, not a medical device. The coefficients are illustrative and not trained or validated on a clinical cohort, and per-segment narrowing is a population-level estimate, not an angiogram. Replace <code>lg()</code> and <code>r10()</code> with a trained model (for example gradient boosting on Cleveland or Framingham data) without changing the 3D layer. Always confirm with a clinician.</p></details>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+const $=i=>document.getElementById(i),sg=x=>1/(1+Math.exp(-x));
+const F=[['age','Age',20,90,1,58,'yrs'],['sbp','Systolic BP',90,200,1,132,'mmHg'],['ldl','LDL cholesterol',50,250,1,128,'mg/dL'],['hdl','HDL cholesterol',20,100,1,46,'mg/dL'],['bmi','BMI',16,45,.5,27,'kg/m²'],['hr','Resting heart rate',45,130,1,72,'bpm'],['mhr','Peak exercise HR',80,200,1,140,'bpm'],['st','ST depression',0,4,.1,0,'mm'],['cac','Calcium score (CT)',0,1500,10,40,'Agatston'],['crp','hs-CRP',0,15,.1,2,'mg/L']];
+const C=[['sex','Male sex'],['smk','Current smoker'],['dm','Diabetes'],['fh','Family history of early heart disease']];
+$('fields').innerHTML=F.map(([k,l,a,b,s,d,u])=>`<label>${l}<span><output id="o_${k}">${d}</output> ${u}</span><input type="range" id="${k}" min="${a}" max="${b}" step="${s}" value="${d}"></label>`).join('')+
+`<label>Chest pain<select id="cp"><option value="0">None</option><option value="1">Atypical</option><option value="2">Typical angina</option></select></label>`+
+C.map(([k,l])=>`<label class="ck"><input type="checkbox" id="${k}"> ${l}</label>`).join('');
+$('sex').checked=true;$('fh').checked=true;$('cp').value=1;
+const PR={low:{age:35,sex:0,sbp:112,ldl:90,hdl:62,bmi:22,hr:62,mhr:175,st:0,cac:0,crp:.8,smk:0,dm:0,fh:0,cp:0},
+mod:{age:55,sex:1,sbp:135,ldl:130,hdl:45,bmi:27,hr:74,mhr:140,st:.5,cac:40,crp:2,smk:0,dm:0,fh:1,cp:1},
+high:{age:62,sex:1,sbp:148,ldl:150,hdl:40,bmi:29,hr:80,mhr:128,st:1,cac:200,crp:3.5,smk:1,dm:0,fh:1,cp:1}};
+const rd=()=>{const v={};F.forEach(f=>v[f[0]]=+$(f[0]).value);v.cp=+$('cp').value;C.forEach(c=>v[c[0]]=+$(c[0]).checked);return v};
+const sim=v=>{const w={...v};if($('s1').checked)w.smk=0;if($('s2').checked)w.ldl=Math.min(w.ldl,70);if($('s3').checked)w.sbp=Math.min(w.sbp,120);if($('s4').checked)w.bmi=Math.min(w.bmi,24);return w};
+/* ---- risk model (swap lg/r10 for a trained model) ---- */
+const terms=v=>[['Age',.055*(v.age-50)],['Male sex',.55*v.sex],['Blood pressure',.012*(v.sbp-120)],['LDL cholesterol',.0045*(v.ldl-100)],['Low HDL',-.015*(v.hdl-50)],['Smoking',.85*v.smk],['Diabetes',.75*v.dm],['BMI',.035*(v.bmi-25)],['Family history',.5*v.fh],['Chest pain',[0,.5,1][v.cp]],['ST depression',.5*v.st],['Exercise capacity',.02*Math.max(0,(220-v.age)*.85-v.mhr)],['Calcium score',.5*Math.log10(1+v.cac)],['Inflammation (CRP)',.12*Math.min(v.crp,10)]];
+const lg=v=>-4.6+terms(v).reduce((a,t)=>a+t[1],0);
+const r10=v=>sg(-9.3+.07*v.age+.5*v.sex+.011*(v.sbp-120)+.004*(v.ldl-100)-.02*(v.hdl-50)+.7*v.smk+.7*v.dm+.15*Math.min(v.crp,10)+.45*Math.log10(1+v.cac)+.25*v.st+.35*v.fh);
+const hue=s=>(1-Math.min(1,s/.9))*130,col=s=>`hsl(${hue(s)},85%,50%)`;
+const pc=x=>(x<.1?(x*100).toFixed(1):Math.round(x*100))+'%';
+const cat=p=>p<.15?'Low':p<.5?'Intermediate':'High';
+/* ---- 3D scene ---- */
+const cv=$('cv'),R=new THREE.WebGLRenderer({antialias:true,alpha:true});R.setPixelRatio(Math.min(devicePixelRatio,2));cv.appendChild(R.domElement);
+const S=new THREE.Scene(),cam=new THREE.PerspectiveCamera(40,1,.1,50);
+S.add(new THREE.AmbientLight(0xffffff,.55));const d1=new THREE.DirectionalLight(0xffffff,.9);d1.position.set(3,4,5);S.add(d1);const d2=new THREE.DirectionalLight(0x88aaff,.4);d2.position.set(-4,-1,-3);S.add(d2);
+const D=(x,y,z,k)=>{let sx=.95,sz=.88;if(y<0){const t=1+.55*y;sx*=t;sz*=t}return new THREE.Vector3(x*sx*k,y*1.2*k,z*sz*k)};
+const H=(a,e,k)=>D(Math.cos(e)*Math.sin(a),Math.sin(e),Math.cos(e)*Math.cos(a),k);
+const G=new THREE.Group();G.rotation.z=.4;S.add(G);
+const hg=new THREE.SphereGeometry(1,64,48),pp=hg.attributes.position;
+for(let i=0;i<pp.count;i++){const v=D(pp.getX(i),pp.getY(i),pp.getZ(i),1);pp.setXYZ(i,v.x,v.y,v.z)}hg.computeVertexNormals();
+const hm=new THREE.MeshStandardMaterial({color:0xb4465a,roughness:.55,transparent:true,opacity:.55,depthWrite:false});
+const heart=new THREE.Mesh(hg,hm);G.add(heart);
+const tb=(r,h,c,x,y,z,rz)=>{const m=new THREE.Mesh(new THREE.CylinderGeometry(r,r*1.1,h,24),new THREE.MeshStandardMaterial({color:c,roughness:.5,transparent:true,opacity:.8}));m.position.set(x,y,z);m.rotation.z=rz;G.add(m)};
+tb(.2,1,0xc45b6b,-.12,1.3,-.1,.15);tb(.15,.7,0x5f7bb5,.4,1.08,.3,-.5);
+const AG=new THREE.Group();G.add(AG);const SEGS=[];
+const VS=[['LM','Left main',-1.2,[[-.02,.86],[.2,.72]],1],
+['LAD','Left anterior descending',.35,[[.2,.72],[.26,.5],[.32,.2],[.37,-.15],[.4,-.5],[.42,-.85]],3],
+['LCx','Left circumflex',0,[[.2,.72],[.65,.66],[1.05,.5],[1.5,.33],[2,.1]],2],
+['RCA','Right coronary',.1,[[-.25,.86],[-.7,.62],[-1.1,.3],[-1.45,0],[-1.95,-.25],[-2.45,-.5]],3]];
+function build(l){AG.children.slice().forEach(m=>{m.geometry.dispose();m.material.dispose();AG.remove(m)});SEGS.length=0;
+VS.forEach(([id,nm,off,pts,n])=>{const cu=new THREE.CatmullRomCurve3(pts.map(p=>H(p[0],p[1],1.04)));
+for(let i=0;i<n;i++){const sp=[];for(let j=0;j<=8;j++)sp.push(cu.getPoint((i+j/8)/n));
+const lab=n==1?nm:nm+' ('+['proximal','mid','distal'][i]+')',sc=sg(l+off+(n==1?0:[.35,0,-.45][i])),st=Math.round(Math.min(95,Math.pow(sc,1.4)*100));
+const c=new THREE.Color(col(sc)),r=Math.max((id=='LM'?.052:.04)*(1-.6*Math.pow(sc,1.5))*(1-.12*i),.014);
+const m=new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(sp),20,r,10),new THREE.MeshStandardMaterial({color:c,emissive:c,emissiveIntensity:.35,roughness:.35}));
+m.userData={lab,sc,st};AG.add(m);SEGS.push(m.userData);
+if(sc>.4)for(let k=0;k<2;k++){const q=new THREE.Mesh(new THREE.SphereGeometry(.028+.05*sc,10,8),new THREE.MeshStandardMaterial({color:0xf2e2b0,roughness:.8}));q.position.copy(sp[2+k*3]);q.scale.y=.7;AG.add(q)}}})}
+/* ---- camera & interaction ---- */
+let th=.3,ph=.1,dist=4.3,drag=0,lx=0,ly=0,hov=null,mx=0,my=0,tgt=null;
+const place=()=>{cam.position.set(dist*Math.sin(th)*Math.cos(ph),dist*Math.sin(ph),dist*Math.cos(th)*Math.cos(ph));cam.lookAt(0,.1,0)};
+const rc=new THREE.Raycaster(),ms=new THREE.Vector2();
+function pick(e){const b=R.domElement.getBoundingClientRect();ms.set((e.clientX-b.left)/b.width*2-1,-(e.clientY-b.top)/b.height*2+1);rc.setFromCamera(ms,cam);
+const h=rc.intersectObjects(AG.children.filter(o=>o.userData.lab))[0];hov=h?h.object:null;const t=$('tip');
+if(hov){t.style.display='block';t.style.left=Math.min(e.clientX-b.left+12,b.width-170)+'px';t.style.top=(e.clientY-b.top+12)+'px';t.textContent=hov.userData.lab+': ~'+hov.userData.st+'% narrowing';
+$('seg').innerHTML=`<b>${hov.userData.lab}</b><br>Estimated narrowing ~${hov.userData.st}% · segment risk score ${pc(hov.userData.sc)}`}else t.style.display='none'}
+const el=R.domElement;
+el.addEventListener('pointerdown',e=>{drag=1;lx=e.clientX;ly=e.clientY;tgt=null;el.setPointerCapture(e.pointerId);pick(e)});
+el.addEventListener('pointermove',e=>{if(drag){th-=(e.clientX-lx)*.008;ph=Math.max(-1.2,Math.min(1.2,ph+(e.clientY-ly)*.006));lx=e.clientX;ly=e.clientY}pick(e)});
+el.addEventListener('pointerup',()=>drag=0);el.addEventListener('pointerleave',()=>{hov=null;$('tip').style.display='none'});
+el.addEventListener('wheel',e=>{e.preventDefault();dist=Math.max(2.4,Math.min(7,dist+e.deltaY*.004))},{passive:false});
+document.querySelectorAll('[data-v]').forEach(b=>b.onclick=()=>{$('rot').checked=false;tgt=+b.dataset.v;ph=.1});
+new ResizeObserver(()=>{const w=cv.clientWidth,h=cv.clientHeight;R.setSize(w,h,false);cam.aspect=w/h;cam.updateProjectionMatrix()}).observe(cv);
+let phase=0,last=performance.now(),HR=72;
+function loop(t){const dt=Math.min(.05,(t-last)/1000);last=t;phase+=dt*HR/60*Math.PI*2;
+G.scale.setScalar(1+.035*Math.pow(Math.max(0,Math.sin(phase)),3));
+if(tgt!==null){th+=(tgt-th)*.1;if(Math.abs(tgt-th)<.01)tgt=null}else if($('rot').checked&&!drag)th+=dt*.25;
+hm.opacity=+$('op').value;AG.children.forEach(m=>{if(m.userData.lab)m.material.emissiveIntensity=m===hov?1:.35});
+place();R.render(S,cam);requestAnimationFrame(loop)}
+/* ---- ECG ---- */
+function ecg(v){const c=$('ecg'),g=c.getContext('2d'),W=c.width,Hh=c.height,cs=getComputedStyle(document.documentElement);g.clearRect(0,0,W,Hh);
+g.strokeStyle=cs.getPropertyValue('--ln');g.lineWidth=1;for(let x=0;x<W;x+=15){g.beginPath();g.moveTo(x,0);g.lineTo(x,Hh);g.stroke()}for(let y=0;y<Hh;y+=15){g.beginPath();g.moveTo(0,y);g.lineTo(W,y);g.stroke()}
+const T=60/v.hr,gs=(p,m,s)=>Math.exp(-Math.pow((p-m)/s,2)),ss=(a,b,x)=>{x=Math.max(0,Math.min(1,(x-a)/(b-a)));return x*x*(3-2*x)};
+g.strokeStyle=v.st>=1?'#ff5468':'#31d17c';g.lineWidth=1.8;g.beginPath();
+for(let x=0;x<W;x++){const p=((x/W)*3*T%T)/T,dep=v.st*.09*(ss(.3,.34,p)-ss(.44,.48,p)),
+y=.12*gs(p,.12,.025)-.12*gs(p,.255,.008)+gs(p,.275,.009)-.25*gs(p,.295,.009)-dep+.3*gs(p,.52,.04)*(v.st>1.5?-1:1);
+const Y=Hh*.7-y*Hh*.55;x?g.lineTo(x,Y):g.moveTo(x,Y)}g.stroke()}
+/* ---- UI update ---- */
+function upd(){const v0=rd(),v=sim(v0),l0=lg(v0),l=lg(v),p0=sg(l0),p=sg(l),a0=r10(v0),a=r10(v);HR=v0.hr;
+F.forEach(f=>$('o_'+f[0]).textContent=v0[f[0]]);build(l);ecg(v0);
+const on=['s1','s2','s3','s4'].some(i=>$(i).checked),lo=pc(sg(l-.6)),hi=pc(sg(l+.6)),c=col(p);
+const T=terms(v).filter(t=>Math.abs(t[1])>.02).sort((x,y)=>Math.abs(y[1])-Math.abs(x[1])).slice(0,6);
+const mod=terms(v).filter(t=>['Blood pressure','LDL cholesterol','Smoking','Diabetes','BMI','Low HDL'].includes(t[0])&&t[1]>.1).sort((x,y)=>y[1]-x[1])[0];
+$('res').innerHTML=`<div class="kp"><div><small>Obstructive CAD probability${on?' (projected)':''}</small><span class="big" style="color:${c}">${pc(p)}</span></div><span class="tag" style="background:${c}">${cat(p)}</span></div>
+<p class="note" style="margin:6px 0 10px">Plausible range ${lo}–${hi}. 10-year major cardiac event risk: <b style="color:var(--tx)">${pc(a)}</b></p>
+<h3>Vessel segments</h3><table>${SEGS.map(s=>`<tr><td><span class="dot" style="background:${col(s.sc)}"></span>${s.lab}</td><td>~${s.st}%</td></tr>`).join('')}</table>
+<h3>Top drivers (red raises risk, green lowers it)</h3>${T.map(t=>`<div class="drv"><span>${t[0]}</span><i style="width:${Math.min(100,Math.abs(t[1])*55)}%;background:${t[1]>0?'#e0364b':'#31b36b'}"></i></div>`).join('')}
+${p>=.5?'<p class="note"><b>Suggested follow-up:</b> high estimated risk, so discuss further cardiac testing with a clinician.</p>':''}
+${mod?`<p class="note">Largest modifiable driver: <b style="color:var(--tx)">${mod[0].toLowerCase()}</b>.</p>`:''}`;
+$('proj').innerHTML=on?`<p>CAD probability <b>${pc(p0)} → ${pc(p)}</b>; 10-year event risk <b>${pc(a0)} → ${pc(a)}</b>. The 3D model shows the projected state.</p>`:'<p>Tick a change to see projected risk and update the 3D model.</p>'}
+document.querySelectorAll('input,select').forEach(e=>e.addEventListener('input',upd));
+document.querySelectorAll('[data-p]').forEach(b=>b.onclick=()=>{const p=PR[b.dataset.p];F.forEach(f=>$(f[0]).value=p[f[0]]);$('cp').value=p.cp;C.forEach(c=>$(c[0]).checked=!!p[c[0]]);upd()});
+$('th').onclick=()=>{const r=document.documentElement,d=getComputedStyle(r).getPropertyValue('--bg').trim()=='#08111b';r.dataset.theme=d?'light':'dark';upd()};
+upd();requestAnimationFrame(loop);
+</script></body></html>
