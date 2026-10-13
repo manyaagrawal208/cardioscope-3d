@@ -34,15 +34,17 @@
 
 Most cardiac risk tools return a single percentage. That hides two things people want to know: **where** in the heart the risk sits, and **why** the number is what it is. CardioScope 3D puts both in one view. It combines clinical, lab, ECG and imaging inputs, predicts risk, and maps it onto the coronary arteries of a 3D heart you can rotate and inspect.
 
+**Live demo:** https://cardioscope-3d.netlify.app
+
 ## Features
 
-- 🫀 **Interactive 3D heart.** It beats at the patient's heart rate. The left main, LAD, left circumflex and right coronary arteries are split into 9 segments, each coloured green to red by risk. Vessels narrow and plaque appears as risk rises.
-- 🧬 **Multimodal inputs.** Clinical data, labs (LDL, HDL, hs-CRP), exercise ECG findings, and a CT calcium score.
-- 📊 **Predictions.** Obstructive CAD probability with a plausible range, 10-year cardiac event risk, and per-segment narrowing estimates.
-- 🔍 **Explainable.** A driver chart shows which factors raise or lower risk, and which modifiable factor matters most.
-- 🔁 **What-if simulator.** Quit smoking, lower LDL, blood pressure or BMI, and watch both the numbers and the 3D heart change.
-- 📈 **Synthesised ECG** that reflects heart rate and ST depression.
-- 🖱️ **Controls.** Drag to rotate, scroll to zoom, hover a segment for its details, preset views, opacity slider, three patient presets, light and dark themes.
+-  **Interactive 3D heart.** It beats at the patient's heart rate. The left main, LAD, left circumflex and right coronary arteries are split into 9 segments, each coloured green to red by risk. Vessels narrow and plaque appears as risk rises.
+-  **Multimodal inputs.** Clinical data, labs (LDL, HDL, hs-CRP), exercise ECG findings, and a CT calcium score.
+-  **Predictions.** Obstructive CAD probability with a plausible range, 10-year cardiac event risk, and per-segment narrowing estimates.
+-  **Explainable.** A driver chart shows which factors raise or lower risk, and which modifiable factor matters most.
+-  **What-if simulator.** Quit smoking, lower LDL, blood pressure or BMI, and watch both the numbers and the 3D heart change.
+-  **Synthesised ECG** that reflects heart rate and ST depression.
+-  **Controls.** Drag to rotate, scroll to zoom, hover a segment for its details, preset views, opacity slider, three patient presets, light and dark themes.
 
 ## How it works
 
