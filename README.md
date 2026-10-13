@@ -133,6 +133,10 @@ In line with the hackathon's AI tools rule, here is exactly which parts were AI-
 
 I take responsibility for everything submitted here and can explain how it works.
 
+## AI Tool Used
+
+**Claude AI**, (Anthropic), via the Claude chat app
+
 ## Author
 
 **Manya Agrawal**, built solo for the Multimodal AI Hackathon 2026 (IIT Mandi, KamandPrompt).
