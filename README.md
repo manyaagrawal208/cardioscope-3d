@@ -115,7 +115,7 @@ The prediction layer is two functions, `lg(v)` (CAD logit) and `r10(v)` (10-year
 
 ## Author
 
-**Manya Agrawal**, built solo for the Multimodal AI Hackathon 2026 (IIT Mandi, KamandPrompt).
+**Manya Agrawal**, built solo, with the help of claude ai, for the Multimodal AI Hackathon 2026 (IIT Mandi, KamandPrompt).
 
 ## License
 
