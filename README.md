@@ -127,7 +127,7 @@ In line with the hackathon's AI tools rule, here is exactly which parts were AI-
 | Risk-model coefficients | Yes, Claude suggested illustrative values from general knowledge of risk-factor effects. They were not fitted to any dataset |
 | `README.md`, `ARCHITECTURE.md`, `MODEL.md` | Author |
 | `banner.svg` | Yes, generated with Claude |
-| Demo video script | Author |
+| Demo video script | Claude |
 | Choosing the track, project direction and scope | Author |
 | Testing the app, screenshots, deployment to Netlify, GitHub repository, Devpost submission | Author |
 
